@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bharat BioVote – Secure Digital Voting System</title>
+<link href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --saffron: #FF9933; --saffron-dark: #e6820a; --saffron-glow: rgba(255,153,51,0.35);
+    --green: #138808; --green-light: #1db510; --green-glow: rgba(19,136,8,0.35);
+    --white: #ffffff; --navy: #000080; --chakra-blue: #0000CD;
+    --glass-bg: rgba(255,255,255,0.07); --glass-border: rgba(255,255,255,0.15);
+    --text-light: rgba(255,255,255,0.88); --text-dim: rgba(255,255,255,0.55);
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+  html { scroll-behavior: smooth; }
+  body { font-family: 'Outfit', sans-serif; background: #050a14; color: var(--white); overflow-x: hidden; cursor: none; }
+
+  /* ── MODALS (GLASSMORPHISM) ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.8);
+    backdrop-filter: blur(15px); z-index: 10001;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-content {
+    background: #0d1b2a; border: 1px solid var(--glass-border);
+    padding: 40px; border-radius: 24px; width: 100%; max-width: 450px;
+    position: relative; box-shadow: 0 0 40px rgba(0,0,0,0.5); text-align: left;
+  }
+  .modal-close { position: absolute; top: 20px; right: 20px; cursor: pointer; font-size: 1.5rem; color: var(--text-dim); }
+  .form-group { margin-bottom: 20px; }
+  .form-group label { display: block; margin-bottom: 8px; font-size: 0.85rem; color: var(--saffron); font-weight: 600; text-transform: uppercase; }
+  .form-group input, .form-group select {
+    width: 100%; padding: 12px; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border); border-radius: 12px; color: white;
+    font-family: 'Outfit', sans-serif; outline: none;
+  }
+  .modal-btn {
+    width: 100%; padding: 14px; border-radius: 50px; border: none;
+    background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+    color: white; font-weight: 700; cursor: pointer; margin-top: 10px; font-size: 1rem; transition: 0.3s;
+  }
+  .modal-btn:disabled { background: #333; cursor: not-allowed; opacity: 0.5; }
+
+  /* ── VOTING GRID ── */
+  .vote-grid { display: grid; gap: 12px; margin-top: 20px; }
+  .party-btn { 
+    padding: 15px; border-radius: 12px; border: 1px solid var(--glass-border); 
+    background: rgba(255,255,255,0.05); color: white; cursor: pointer; 
+    font-weight: 600; text-align: left; transition: 0.3s; display: flex; align-items: center; gap: 15px;
+  }
+  .party-btn:hover { background: var(--green); border-color: var(--green-light); transform: translateX(10px); }
+
+  /* ── EXISTING UI COMPONENTS ── */
+  #cursor { position: fixed; width: 14px; height: 14px; background: var(--saffron); border-radius: 50%; pointer-events: none; z-index: 9999; transform: translate(-50%,-50%); transition: transform .12s ease; mix-blend-mode: screen; }
+  #cursor-ring { position: fixed; width: 38px; height: 38px; border: 1.5px solid rgba(255,153,51,.6); border-radius: 50%; pointer-events: none; z-index: 9998; transform: translate(-50%,-50%); transition: transform .35s; }
+  #bg-canvas { position: fixed; inset: 0; z-index: 0; background: radial-gradient(ellipse 80% 60% at 20% 10%, rgba(255,153,51,.18) 0%, transparent 60%), #050a14; }
+  nav { position: fixed; top:0; left:0; right:0; z-index:1000; display: flex; align-items: center; justify-content: space-between; padding: 0 5%; height: 70px; background: rgba(5,10,20,0.72); backdrop-filter: blur(20px); border-bottom: 1px solid rgba(255,153,51,.18); }
+  .nav-logo { display: flex; align-items: center; gap: 12px; font-family: 'Yatra One', cursive; font-size: 1.25rem; color: var(--white); }
+  .nav-logo .chakra-mini { width: 32px; height: 32px; border: 2px solid var(--chakra-blue); border-radius: 50%; animation: spin 8s linear infinite; }
+  #hero { position:relative; z-index:2; min-height: 100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; text-align:center; }
+  .ashoka-wrap { position:relative; width:280px; height:280px; margin-bottom: 40px; filter: drop-shadow(0 0 40px rgba(0,0,180,.5)); }
+  .hero-title { font-family:'Yatra One',cursive; font-size: 4.5rem; background: linear-gradient(135deg, var(--saffron), #fff, var(--green-light)); -webkit-background-clip:text; -webkit-text-fill-color:transparent; margin-bottom:10px; }
+  @keyframes spin { to { transform:rotate(360deg); } }
+  #particle-canvas { position:fixed; inset:0; z-index:1; pointer-events:none; }
+</style>
+</head>
+<body>
+
+<div id="cursor"></div><div id="cursor-ring"></div>
+<div id="bg-canvas"></div>
+<canvas id="particle-canvas"></canvas>
+
+<nav>
+  <div class="nav-logo"><div class="chakra-mini"></div> Bharat BioVote</div>
+  <button onclick="openModal('regModal')" style="background:var(--saffron); color:white; border:none; padding:8px 25px; border-radius:50px; font-weight:600; cursor:pointer;">Register</button>
+</nav>
+
+<section id="hero">
+  <div class="ashoka-wrap"><div style="width:100%; height:100%; border-radius:50%; border:3px solid rgba(0,0,200,0.5); animation:spin 20s linear infinite;"><svg id="ashokaSpokes" viewBox="0 0 200 200" style="position:absolute; inset:0;"></svg></div></div>
+  <h1 class="hero-title">Bharat BioVote</h1>
+  <p style="color:var(--text-dim); max-width:600px; margin-bottom:40px; font-size:1.1rem;">Digital India's Securest Voting Platform. Fingerprint authentication connected to real-time election monitoring.</p>
+  <div style="display:flex; gap:20px;">
+    <button class="modal-btn" style="padding:15px 40px; width:auto;" onclick="openModal('regModal')">📋 Voter Registration</button>
+    <button class="modal-btn" style="padding:15px 40px; width:auto; background:transparent; border:1px solid white;" onclick="openModal('voteModal')">🔐 Login & Vote</button>
+  </div>
+</section>
+
+<!-- MODAL: REGISTRATION -->
+<div id="regModal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('regModal')">&times;</span>
+    <h2 style="font-family:'Yatra One'; color:white; margin-bottom:20px;">Register New Voter</h2>
+    <div class="form-group"><label>Full Name</label><input type="text" id="regName" placeholder="Enter Name"></div>
+    <div class="form-group"><label>Voter ID</label><input type="text" id="regVoterId" placeholder="e.g. ABC12345"></div>
+    <div class="form-group"><label>Mobile</label><input type="tel" id="regMobile" placeholder="Enter Mobile"></div>
+    <button class="modal-btn" onclick="registerUser()">1. Save to Database</button>
+    <button class="modal-btn" onclick="registerFingerprint()" style="background:var(--navy); margin-top:10px;">2. Link Fingerprint</button>
+    <p id="regStatus" style="font-size:0.8rem; margin-top:10px; text-align:center; color:var(--green-light);"></p>
+  </div>
+</div>
+
+<!-- MODAL: VOTING (THE CORE SYSTEM) -->
+<div id="voteModal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('voteModal')">&times;</span>
+    <h2 style="font-family:'Yatra One'; color:white; margin-bottom:20px;">Voter Authentication</h2>
+    
+    <div id="authStep">
+        <button class="modal-btn" onclick="loginFingerprint()" style="background:linear-gradient(135deg, var(--saffron), var(--green))">🔑 Verify Identity (Biometric)</button>
+        <p style="color:var(--text-dim); font-size:0.8rem; margin-top:15px; text-align:center;">Fingerprint required to unlock the digital ballot.</p>
+    </div>
+
+    <div id="ballotStep" style="display:none;">
+        <h3 style="color:var(--green-light); margin-bottom:15px;">✅ Verified: <span id="voterDisplayName"></span></h3>
+        <p style="color:var(--text-dim); margin-bottom:20px;">Select your candidate carefully. This action is immutable.</p>
+        <div class="vote-grid">
+            <button class="party-btn" onclick="castVote('Party A')">🇮🇳 <b>Party A</b> (National Alliance)</button>
+            <button class="party-btn" onclick="castVote('Party B')">🏛️ <b>Party B</b> (People's Front)</button>
+            <button class="party-btn" onclick="castVote('Party C')">⚖️ <b>Party C</b> (Equality Party)</button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── FIREBASE & SYSTEM LOGIC ── -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBWhOOP0pFSr9GNdSHFlJJfUbRlKpTCzfc",
+    authDomain: "bharat-biovote.firebaseapp.com",
+    projectId: "bharat-biovote",
+    storageBucket: "bharat-biovote.firebasestorage.app",
+    messagingSenderId: "490208979194",
+    appId: "1:490208979194:web:2a7ba7601ece4bd53a8143"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let sessionVoterID = null;
+
+  // 1. REGISTER USER
+  window.registerUser = async function() {
+    const name = document.getElementById("regName").value;
+    const voterid = document.getElementById("regVoterId").value.trim().toUpperCase();
+    const mobile = document.getElementById("regMobile").value;
+    if(!name || !voterid) return alert("Fill all details");
+
+    try {
+        await setDoc(doc(db, "users", voterid), { name, mobile, voted: false, vote: "none" });
+        alert("Success: Database record created.");
+    } catch (e) { alert("Error: " + e.message); }
+  };
+
+  // 2. FINGERPRINT LOGIN + FIREBASE CHECK
+  window.loginFingerprint = async function() {
+    try {
+        // Biometric Challenge
+        await navigator.credentials.get({ publicKey: { challenge: new Uint8Array(32) } });
+
+        const voterid = prompt("Biometrics Verified. Enter Voter ID to access ballot:").toUpperCase();
+        if(!voterid) return;
+
+        // Check if Election is Active
+        const electionSnap = await getDoc(doc(db, "settings", "election"));
+        if(electionSnap.exists() && electionSnap.data().status === "stopped") {
+            return alert("ELECTION CLOSED: Administrator has stopped the voting process.");
+        }
+
+        // Fetch User Data
+        const userSnap = await getDoc(doc(db, "users", voterid));
+        if (!userSnap.exists()) return alert("User Not Found in Database.");
+
+        if (userSnap.data().voted === true) {
+            alert("ACCESS DENIED: You have already cast your vote.");
+        } else {
+            sessionVoterID = voterid;
+            document.getElementById("voterDisplayName").innerText = userSnap.data().name;
+            document.getElementById("authStep").style.display = "none";
+            document.getElementById("ballotStep").style.display = "block";
+            alert("Identity Authenticated. Ballot Unlocked.");
+        }
+    } catch (err) { alert("Fingerprint Verification Failed."); }
+  };
+
+  // 3. CAST VOTE
+  window.castVote = async function(candidate) {
+    if (!sessionVoterID) return alert("Session expired.");
+    try {
+        await updateDoc(doc(db, "users", sessionVoterID), {
+            voted: true,
+            vote: candidate
+        });
+        alert("THANK YOU! Your vote for " + candidate + " has been registered.");
+        location.reload();
+    } catch (e) { alert("System Error: " + e.message); }
+  };
+
+  window.openModal = id => document.getElementById(id).style.display = 'flex';
+  window.closeModal = id => document.getElementById(id).style.display = 'none';
+</script>
+
+<script>
+  // Biometric Registration Logic
+  async function registerFingerprint() {
+    try {
+        const publicKey = {
+            challenge: new Uint8Array(32),
+            rp: { name: "Bharat BioVote" },
+            user: { id: new Uint8Array(16), name: "voter@bharat.gov", displayName: "Voter" },
+            pubKeyCredParams: [{ alg: -7, type: "public-key" }]
+        };
+        await navigator.credentials.create({ publicKey });
+        document.getElementById("regStatus").innerText = "✅ Biometric Link Successful";
+    } catch (err) { alert("Biometric Registration Failed. Ensure you are on HTTPS."); }
+  }
+
+  // UI Decorations (Cursor & Ashoka Chakra)
+  (function(){
+    const svg = document.getElementById('ashokaSpokes');
+    for(let i=0; i<24; i++){
+      const ang=(i/24)*Math.PI*2-Math.PI/2;
+      const x2=100+90*Math.cos(ang), y2=100+90*Math.sin(ang);
+      const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+      line.setAttribute('x1',100); line.setAttribute('y1',100); line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+      line.setAttribute('stroke','rgba(0,0,200,0.6)'); line.setAttribute('stroke-width','1.5');
+      svg.appendChild(line);
+    }
+  })();
+
+  const cursor = document.getElementById('cursor'), ring = document.getElementById('cursor-ring');
+  let mx=0,my=0,rx=0,ry=0;
+  document.addEventListener('mousemove', e=>{ mx=e.clientX; my=e.clientY; cursor.style.left=mx+'px'; cursor.style.top=my+'px'; });
+  (function anim(){ rx+=(mx-rx)*.1; ry+=(my-ry)*.1; ring.style.left=rx+'px'; ring.style.top=ry+'px'; requestAnimationFrame(anim); })();
+
+  const pc = document.getElementById('particle-canvas'), ctx = pc.getContext('2d');
+  let W, H; function res(){ W=pc.width=window.innerWidth; H=pc.height=window.innerHeight; }
+  res(); window.onresize = res;
+  class P {
+    constructor(){ this.x=Math.random()*W; this.y=Math.random()*H; this.v=Math.random()*0.5; }
+    upd(){ this.y-=this.v; if(this.y<0) this.y=H; }
+    drw(){ ctx.fillStyle="rgba(255,255,255,0.2)"; ctx.beginPath(); ctx.arc(this.x,this.y,1,0,Math.PI*2); ctx.fill(); }
+  }
+  const pts = Array.from({length:80}, ()=>new P());
+  function loop(){ ctx.clearRect(0,0,W,H); pts.forEach(p=>{p.upd();p.drw();}); requestAnimationFrame(loop); }
+  loop();
+</script>
+</body>
+</html>
