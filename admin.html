@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>BioVote Admin Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;600&display=swap" rel="stylesheet"/>
+    <style>
+        body { font-family: 'Outfit', sans-serif; background: #050a14; color: white; padding: 50px; }
+        .card { background: rgba(255,255,255,0.05); padding: 30px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.1); margin-bottom: 20px; }
+        .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+        .stat-box { padding: 20px; background: #0d1b2a; border-radius: 15px; text-align: center; }
+        .stat-box h1 { color: #FF9933; margin: 0; }
+        input { padding: 12px; border-radius: 8px; border: none; margin-right: 10px; }
+        button { padding: 12px 25px; border-radius: 50px; border: none; background: #138808; color: white; font-weight: 600; cursor: pointer; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { padding: 12px; border-bottom: 1px solid rgba(255,255,255,0.1); text-align: left; }
+    </style>
+</head>
+<body>
+
+    <div id="loginGate" class="card" style="max-width: 400px; margin: 100px auto; text-align: center;">
+        <h2>Admin Login</h2>
+        <input type="password" id="adminPass" placeholder="Enter Admin Password">
+        <button onclick="adminLogin()">Login</button>
+    </div>
+
+    <div id="adminPanel" style="display:none;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+            <h1>Admin Dashboard</h1>
+            <div>
+                <button id="toggleBtn" onclick="toggleElection()" style="background:#e63946;">Stop Election</button>
+                <button onclick="location.reload()" style="background:#0077b6;">Refresh Data</button>
+            </div>
+        </div>
+
+        <div class="stat-grid">
+            <div class="stat-box"><h3>Total Users</h3><h1 id="totalUsers">0</h1></div>
+            <div class="stat-box"><h3>Total Votes</h3><h1 id="totalVotes">0</h1></div>
+            <div class="stat-box"><h3>Party A</h3><h1 id="partyA">0</h1></div>
+            <div class="stat-box"><h3>Party B</h3><h1 id="partyB">0</h1></div>
+            <div class="stat-box"><h3>Party C</h3><h1 id="partyC">0</h1></div>
+        </div>
+
+        <div class="card" style="margin-top:40px;">
+            <h3>Live Voter List</h3>
+            <table id="voterTable">
+                <thead><tr><th>Voter ID</th><th>Name</th><th>Status</th><th>Vote</th></tr></thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+    import { getFirestore, collection, getDocs, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyBWhOOP0pFSr9GNdSHFlJJfUbRlKpTCzfc",
+        authDomain: "bharat-biovote.firebaseapp.com",
+        projectId: "bharat-biovote",
+        storageBucket: "bharat-biovote.firebasestorage.app",
+        messagingSenderId: "490208979194",
+        appId: "1:490208979194:web:2a7ba7601ece4bd53a8143"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+
+    window.adminLogin = function() {
+        if(document.getElementById("adminPass").value === "admin123") {
+            document.getElementById("loginGate").style.display = "none";
+            document.getElementById("adminPanel").style.display = "block";
+            loadDashboard();
+        } else { alert("Wrong Password"); }
+    };
+
+    async function loadDashboard() {
+        const querySnapshot = await getDocs(collection(db, "users"));
+        let stats = { total: 0, voted: 0, A: 0, B: 0, C: 0 };
+        const tbody = document.querySelector("#voterTable tbody");
+        tbody.innerHTML = "";
+
+        querySnapshot.forEach((doc) => {
+            const data = doc.data();
+            stats.total++;
+            if(data.voted) {
+                stats.voted++;
+                if(data.vote === "Party A") stats.A++;
+                if(data.vote === "Party B") stats.B++;
+                if(data.vote === "Party C") stats.C++;
+            }
+
+            tbody.innerHTML += `<tr>
+                <td>${doc.id}</td>
+                <td>${data.name}</td>
+                <td style="color:${data.voted ? '#138808' : '#FF9933'}">${data.voted ? 'Voted' : 'Pending'}</td>
+                <td>${data.vote || '-'}</td>
+            </tr>`;
+        });
+
+        document.getElementById("totalUsers").innerText = stats.total;
+        document.getElementById("totalVotes").innerText = stats.voted;
+        document.getElementById("partyA").innerText = stats.A;
+        document.getElementById("partyB").innerText = stats.B;
+        document.getElementById("partyC").innerText = stats.C;
+        
+        // Load Status
+        const config = await getDoc(doc(db, "settings", "election"));
+        const btn = document.getElementById("toggleBtn");
+        if(config.exists() && config.data().status === "stopped") {
+            btn.innerText = "Start Election"; btn.style.background = "#138808";
+        } else {
+            btn.innerText = "Stop Election"; btn.style.background = "#e63946";
+        }
+    }
+
+    window.toggleElection = async function() {
+        const btn = document.getElementById("toggleBtn");
+        const newStatus = btn.innerText === "Stop Election" ? "stopped" : "started";
+        await setDoc(doc(db, "settings", "election"), { status: newStatus });
+        alert("Election Status Updated to: " + newStatus);
+        location.reload();
+    };
+</script>
+</body>
+</html>
