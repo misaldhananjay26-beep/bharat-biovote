@@ -1,0 +1,1312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Bharat BioVote – Secure Digital Voting System</title>
+<link href="https://fonts.googleapis.com/css2?family=Yatra+One&family=Tiro+Devanagari+Hindi&family=Outfit:wght@300;400;500;600;700;800&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --saffron: #FF9933;
+    --saffron-dark: #e6820a;
+    --saffron-glow: rgba(255,153,51,0.35);
+    --green: #138808;
+    --green-light: #1db510;
+    --green-glow: rgba(19,136,8,0.35);
+    --white: #ffffff;
+    --navy: #000080;
+    --chakra-blue: #0000CD;
+    --glass-bg: rgba(255,255,255,0.07);
+    --glass-border: rgba(255,255,255,0.15);
+    --text-light: rgba(255,255,255,0.88);
+    --text-dim: rgba(255,255,255,0.55);
+  }
+
+  *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+
+  html { scroll-behavior: smooth; }
+
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: #050a14;
+    color: var(--white);
+    overflow-x: hidden;
+    cursor: none;
+  }
+
+  /* ── CUSTOM CURSOR ── */
+  #cursor {
+    position: fixed; width: 14px; height: 14px;
+    background: var(--saffron); border-radius: 50%;
+    pointer-events: none; z-index: 9999;
+    transform: translate(-50%,-50%);
+    transition: transform .12s ease, background .2s;
+    mix-blend-mode: screen;
+  }
+  #cursor-ring {
+    position: fixed; width: 38px; height: 38px;
+    border: 1.5px solid rgba(255,153,51,.6);
+    border-radius: 50%; pointer-events: none;
+    z-index: 9998; transform: translate(-50%,-50%);
+    transition: transform .35s cubic-bezier(.175,.885,.32,1.275), opacity .2s;
+  }
+
+  /* ── ANIMATED BACKGROUND ── */
+  #bg-canvas {
+    position: fixed; inset: 0; z-index: 0;
+    background:
+      radial-gradient(ellipse 80% 60% at 20% 10%, rgba(255,153,51,.18) 0%, transparent 60%),
+      radial-gradient(ellipse 70% 50% at 80% 90%, rgba(19,136,8,.16) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 40% at 50% 50%, rgba(0,0,180,.12) 0%, transparent 70%),
+      #050a14;
+    animation: bgShift 12s ease-in-out infinite alternate;
+  }
+  @keyframes bgShift {
+    0%   { filter: hue-rotate(0deg) brightness(1); }
+    50%  { filter: hue-rotate(8deg) brightness(1.05); }
+    100% { filter: hue-rotate(-5deg) brightness(.95); }
+  }
+
+  /* ── PARTICLE CANVAS ── */
+  #particle-canvas { position:fixed; inset:0; z-index:1; pointer-events:none; }
+
+  /* ── NAVBAR ── */
+  nav {
+    position: fixed; top:0; left:0; right:0; z-index:1000;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 0 5%;
+    height: 70px;
+    background: rgba(5,10,20,0.72);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid rgba(255,153,51,.18);
+    transition: background .4s;
+  }
+  .nav-logo {
+    display: flex; align-items: center; gap: 12px;
+    font-family: 'Yatra One', cursive;
+    font-size: clamp(1rem,2.2vw,1.25rem);
+    color: var(--white);
+    letter-spacing: .5px;
+  }
+  .nav-logo .chakra-mini {
+    width: 36px; height: 36px;
+    border: 2.5px solid var(--chakra-blue);
+    border-radius: 50%;
+    position: relative;
+    animation: spin 8s linear infinite;
+    flex-shrink: 0;
+  }
+  .nav-logo .chakra-mini::before {
+    content:'';
+    position:absolute; inset:3px;
+    border-radius:50%;
+    background: conic-gradient(var(--chakra-blue) 0deg, transparent 30deg,
+      var(--chakra-blue) 30deg, transparent 60deg,
+      var(--chakra-blue) 60deg, transparent 90deg,
+      var(--chakra-blue) 90deg, transparent 120deg,
+      var(--chakra-blue) 120deg, transparent 150deg,
+      var(--chakra-blue) 150deg, transparent 180deg,
+      var(--chakra-blue) 180deg, transparent 210deg,
+      var(--chakra-blue) 210deg, transparent 240deg,
+      var(--chakra-blue) 240deg, transparent 270deg,
+      var(--chakra-blue) 270deg, transparent 300deg,
+      var(--chakra-blue) 300deg, transparent 330deg,
+      var(--chakra-blue) 330deg, transparent 360deg);
+    opacity:.6;
+  }
+  .nav-links { display:flex; gap:28px; list-style:none; }
+  .nav-links a {
+    color: var(--text-dim); text-decoration:none; font-size:.9rem;
+    font-weight:500; letter-spacing:.3px;
+    transition: color .25s;
+    position: relative;
+  }
+  .nav-links a::after {
+    content:''; position:absolute; bottom:-4px; left:0; right:0;
+    height:1.5px; background: linear-gradient(90deg, var(--saffron), var(--green));
+    transform:scaleX(0); transition:transform .3s;
+  }
+  .nav-links a:hover { color:var(--white); }
+  .nav-links a:hover::after { transform:scaleX(1); }
+  .nav-cta {
+    background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+    color:#fff; border:none; padding:9px 22px; border-radius:50px;
+    font-size:.88rem; font-weight:600; cursor:pointer;
+    transition: box-shadow .3s, transform .2s;
+    font-family: 'Outfit', sans-serif;
+  }
+  .nav-cta:hover {
+    box-shadow: 0 0 22px var(--saffron-glow);
+    transform: translateY(-1px);
+  }
+  .hamburger { display:none; flex-direction:column; gap:5px; cursor:pointer; }
+  .hamburger span { width:24px; height:2px; background:var(--white); border-radius:2px; transition:.3s; }
+
+  /* ── MODALS (Integrated from File 2) ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: rgba(0,0,0,0.85);
+    backdrop-filter: blur(15px); z-index: 10001;
+    display: none; align-items: center; justify-content: center; padding: 20px;
+  }
+  .modal-content {
+    background: #0d1b2a; border: 1px solid var(--glass-border);
+    padding: 40px; border-radius: 24px; width: 100%; max-width: 480px;
+    position: relative; box-shadow: 0 20px 60px rgba(0,0,0,0.6); text-align: left;
+    animation: fadeSlideUp 0.4s ease-out;
+  }
+  .modal-close { 
+    position: absolute; top: 20px; right: 20px; cursor: pointer; 
+    font-size: 1.8rem; color: var(--text-dim); transition: 0.3s;
+  }
+  .modal-close:hover { color: var(--saffron); }
+  
+  .form-group { margin-bottom: 20px; }
+  .form-group label { 
+    display: block; margin-bottom: 8px; font-size: 0.8rem; 
+    color: var(--saffron); font-weight: 700; text-transform: uppercase; letter-spacing: 1px;
+  }
+  .form-group input, .form-group select {
+    width: 100%; padding: 14px; background: rgba(255,255,255,0.05);
+    border: 1px solid var(--glass-border); border-radius: 12px; color: white;
+    font-family: 'Outfit', sans-serif; outline: none; transition: 0.3s;
+  }
+  .form-group input:focus { border-color: var(--saffron); background: rgba(255,255,255,0.1); }
+  
+  .modal-btn {
+    width: 100%; padding: 16px; border-radius: 50px; border: none;
+    background: linear-gradient(135deg, var(--saffron), var(--saffron-dark));
+    color: white; font-weight: 700; cursor: pointer; margin-top: 10px; 
+    font-size: 1rem; transition: 0.3s; font-family: 'Outfit', sans-serif;
+  }
+  .modal-btn:hover { transform: translateY(-2px); box-shadow: 0 8px 20px var(--saffron-glow); }
+  .modal-btn:disabled { background: #333; cursor: not-allowed; opacity: 0.5; }
+
+  .vote-grid { display: grid; gap: 15px; margin-top: 25px; }
+  .party-btn { 
+    padding: 18px; border-radius: 16px; border: 1px solid var(--glass-border); 
+    background: rgba(255,255,255,0.05); color: white; cursor: pointer; 
+    font-weight: 600; text-align: left; transition: 0.3s; display: flex; align-items: center; gap: 20px;
+    font-family: 'Outfit', sans-serif; font-size: 1.05rem;
+  }
+  .party-btn:hover { 
+    background: rgba(29, 181, 16, 0.15); border-color: var(--green-light); 
+    transform: translateX(10px); box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+  }
+  .party-icon { font-size: 1.5rem; }
+
+  /* ── HERO ── */
+  #hero {
+    position:relative; z-index:2;
+    min-height: 100vh;
+    display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+    text-align:center;
+    padding: 100px 5% 60px;
+    overflow: hidden;
+  }
+
+  /* TRICOLOR TOP BAR */
+  .tricolor-bar {
+    position:absolute; top:0; left:0; right:0; height:5px;
+    background: linear-gradient(90deg, var(--saffron) 33.3%, white 33.3%, white 66.6%, var(--green) 66.6%);
+  }
+
+  /* ASHOKA CHAKRA BIG */
+  .ashoka-wrap {
+    position:relative; width:clamp(200px,30vw,340px);
+    height:clamp(200px,30vw,340px);
+    margin-bottom: 40px;
+    filter: drop-shadow(0 0 40px rgba(0,0,180,.5));
+  }
+  .ashoka-outer {
+    width:100%; height:100%; border-radius:50%;
+    border: 3px solid rgba(0,0,200,.6);
+    animation: spin 18s linear infinite;
+    position:relative;
+  }
+  .ashoka-inner-ring {
+    position:absolute; inset:12%;
+    border-radius:50%;
+    border: 2px solid rgba(0,0,200,.45);
+    animation: spin 10s linear infinite reverse;
+  }
+  .ashoka-hub {
+    position:absolute; inset:42%;
+    border-radius:50%;
+    background: radial-gradient(circle, rgba(0,0,200,.9), rgba(0,0,80,.5));
+    box-shadow: 0 0 20px rgba(0,0,200,.6);
+  }
+
+  .ashoka-svg {
+    position:absolute; inset:0; width:100%; height:100%;
+  }
+
+  .hero-badge {
+    display:inline-flex; align-items:center; gap:8px;
+    background: var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(12px);
+    padding:8px 20px; border-radius:50px;
+    font-size:.8rem; font-weight:500; color:var(--saffron);
+    letter-spacing:1.5px; text-transform:uppercase;
+    margin-bottom:22px;
+    animation: fadeSlideUp .8s .2s both;
+  }
+  .badge-dot {
+    width:7px; height:7px; border-radius:50%;
+    background:var(--green-light);
+    box-shadow: 0 0 8px var(--green-glow);
+    animation: pulse 1.8s ease-in-out infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+  h1.hero-title {
+    font-family:'Yatra One',cursive;
+    font-size: clamp(2.4rem,6vw,5rem);
+    line-height: 1.12;
+    background: linear-gradient(135deg, var(--saffron) 0%, #fff 45%, var(--green-light) 100%);
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+    margin-bottom:20px;
+    animation: fadeSlideUp .9s .4s both;
+    letter-spacing: -.5px;
+  }
+
+  .hero-tagline {
+    font-size:clamp(1rem,2.2vw,1.35rem);
+    color:var(--text-dim); font-weight:300;
+    max-width:520px; line-height:1.7;
+    animation: fadeSlideUp .9s .6s both;
+    margin-bottom:40px;
+  }
+  .hero-tagline span { color:var(--white); font-weight:500; }
+
+  .btn-group {
+    display:flex; gap:16px; flex-wrap:wrap; justify-content:center;
+    animation: fadeSlideUp .9s .8s both;
+    margin-bottom:60px;
+  }
+  .btn-primary, .btn-secondary {
+    padding:14px 36px; border-radius:50px;
+    font-family:'Outfit',sans-serif; font-size:.97rem;
+    font-weight:600; cursor:pointer; border:none;
+    transition: transform .25s, box-shadow .25s;
+    position:relative; overflow:hidden;
+    letter-spacing:.4px;
+  }
+  .btn-primary {
+    background: linear-gradient(135deg, var(--saffron), #ff6600);
+    color:#fff;
+    box-shadow: 0 4px 20px rgba(255,102,0,.3);
+  }
+  .btn-primary::before {
+    content:''; position:absolute; inset:0;
+    background:linear-gradient(135deg,rgba(255,255,255,.2),transparent);
+    opacity:0; transition:opacity .3s;
+  }
+  .btn-primary:hover::before { opacity:1; }
+  .btn-primary:hover { transform:translateY(-3px) scale(1.03); box-shadow:0 8px 30px rgba(255,102,0,.5); }
+
+  .btn-secondary {
+    background:transparent;
+    color:var(--white);
+    border:1.5px solid rgba(255,255,255,.3);
+    backdrop-filter:blur(10px);
+  }
+  .btn-secondary:hover {
+    transform:translateY(-3px) scale(1.03);
+    border-color:var(--green);
+    box-shadow:0 8px 30px var(--green-glow);
+    background:rgba(19,136,8,.1);
+  }
+
+  /* STATS ROW */
+  .hero-stats {
+    display:flex; gap:clamp(20px,4vw,60px); flex-wrap:wrap; justify-content:center;
+    animation: fadeSlideUp .9s 1s both;
+  }
+  .stat-item { text-align:center; }
+  .stat-num {
+    font-size:clamp(1.6rem,3vw,2.4rem); font-weight:800;
+    background:linear-gradient(135deg,var(--saffron),var(--white));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .stat-label { font-size:.78rem; color:var(--text-dim); letter-spacing:1px; text-transform:uppercase; margin-top:3px; }
+
+  /* ── SECTIONS SHARED ── */
+  section { position:relative; z-index:2; }
+  .section-inner { max-width:1100px; margin:0 auto; padding:100px 5%; }
+
+  .section-tag {
+    display:inline-block;
+    font-size:.72rem; font-weight:700; letter-spacing:2.5px;
+    text-transform:uppercase; color:var(--saffron);
+    margin-bottom:14px;
+    padding: 5px 14px;
+    border: 1px solid rgba(255,153,51,.3);
+    border-radius:50px;
+    background:rgba(255,153,51,.07);
+  }
+  .section-title {
+    font-family:'Yatra One',cursive;
+    font-size:clamp(1.8rem,4vw,3rem);
+    line-height:1.2; margin-bottom:18px;
+  }
+  .underline-accent {
+    width:60px; height:3px; border-radius:3px;
+    background:linear-gradient(90deg,var(--saffron),var(--green));
+    margin-bottom:40px;
+  }
+
+  /* ── ABOUT ── */
+  #about { background:transparent; }
+  .about-grid {
+    display:grid;
+    grid-template-columns:1fr 1fr;
+    gap:40px; align-items:center;
+  }
+  .about-text p {
+    color:var(--text-light); font-size:1.02rem; line-height:1.85;
+    margin-bottom:18px;
+  }
+  .about-features { display:flex; flex-direction:column; gap:16px; margin-top:10px; }
+  .feature-pill {
+    display:flex; align-items:center; gap:14px;
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(14px);
+    padding:14px 20px; border-radius:14px;
+    transition: transform .3s, border-color .3s;
+  }
+  .feature-pill:hover { transform:translateX(8px); border-color:rgba(255,153,51,.4); }
+  .pill-icon { font-size:1.5rem; flex-shrink:0; }
+  .pill-text strong { display:block; font-size:.95rem; color:var(--white); }
+  .pill-text span { font-size:.82rem; color:var(--text-dim); }
+
+  .about-visual {
+    display:flex; align-items:center; justify-content:center;
+  }
+  .security-card {
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(20px);
+    border-radius:24px;
+    padding:36px; text-align:center;
+    position:relative; overflow:hidden;
+    width:100%;
+    max-width:340px;
+  }
+  .security-card::before {
+    content:''; position:absolute;
+    top:-1px; left:10%; right:10%; height:1px;
+    background:linear-gradient(90deg,transparent,var(--saffron),transparent);
+  }
+  .sec-icon { font-size:4rem; margin-bottom:16px; display:block; }
+  .security-card h3 { font-size:1.15rem; font-weight:700; margin-bottom:10px; color:var(--white); }
+  .security-card p { color:var(--text-dim); font-size:.88rem; line-height:1.7; }
+  .lock-ring {
+    width:100px; height:100px; margin:0 auto 20px;
+    border-radius:50%;
+    border:2px solid rgba(255,153,51,.4);
+    display:flex; align-items:center; justify-content:center;
+    position:relative;
+    animation:lockPulse 3s ease-in-out infinite;
+  }
+  .lock-ring::after {
+    content:''; position:absolute; inset:-8px;
+    border-radius:50%; border:1px solid rgba(19,136,8,.3);
+    animation:lockPulse 3s ease-in-out infinite .5s;
+  }
+  @keyframes lockPulse {
+    0%,100% { box-shadow:0 0 0 0 rgba(255,153,51,.3); }
+    50% { box-shadow:0 0 0 12px rgba(255,153,51,0); }
+  }
+
+  /* ── VISION ── */
+  #vision {
+    background: linear-gradient(180deg,
+      rgba(255,153,51,.04) 0%,
+      rgba(19,136,8,.04) 100%);
+    border-top:1px solid rgba(255,255,255,.05);
+    border-bottom:1px solid rgba(255,255,255,.05);
+  }
+  .vision-grid {
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:24px; margin-top:20px;
+  }
+  .vision-card {
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(16px);
+    border-radius:20px;
+    padding:32px 24px;
+    position:relative; overflow:hidden;
+    transition:transform .35s, border-color .35s, box-shadow .35s;
+    opacity:0; transform:translateY(30px);
+  }
+  .vision-card.visible { opacity:1; transform:none; transition: opacity .6s ease, transform .6s ease; }
+  .vision-card:hover {
+    transform:translateY(-8px);
+    border-color:rgba(255,153,51,.35);
+    box-shadow:0 20px 50px rgba(0,0,0,.3), 0 0 30px rgba(255,153,51,.1);
+  }
+  .vision-card::after {
+    content:''; position:absolute;
+    bottom:0; left:0; right:0; height:2px;
+    background:linear-gradient(90deg,var(--saffron),var(--green));
+    transform:scaleX(0); transition:transform .4s;
+  }
+  .vision-card:hover::after { transform:scaleX(1); }
+  .vc-num {
+    font-size:.72rem; letter-spacing:2px; color:var(--saffron);
+    font-weight:700; text-transform:uppercase; margin-bottom:14px;
+  }
+  .vc-icon { font-size:2.4rem; margin-bottom:16px; display:block; }
+  .vc-title { font-size:1.1rem; font-weight:700; margin-bottom:10px; color:var(--white); }
+  .vc-desc { color:var(--text-dim); font-size:.88rem; line-height:1.75; }
+
+  /* ── FOUNDER ── */
+  #founder { background:transparent; }
+  .founder-wrap {
+    display:flex; align-items:center; gap:60px;
+    flex-wrap:wrap; justify-content:center;
+  }
+  .founder-avatar-wrap {
+    position:relative; flex-shrink:0;
+  }
+  .founder-ring {
+    width:200px; height:200px; border-radius:50%;
+    background: linear-gradient(135deg, var(--saffron), var(--green));
+    padding:3px;
+    animation: spin 20s linear infinite;
+  }
+  .founder-avatar {
+    width:100%; height:100%; border-radius:50%;
+    background: linear-gradient(135deg,#0d1b2a,#1a2a4a);
+    display:flex; align-items:center; justify-content:center;
+    font-family:'Yatra One',cursive;
+    font-size:4rem; color:var(--saffron);
+    animation: spin 20s linear infinite reverse;
+  }
+  .founder-halo {
+    position:absolute; inset:-12px; border-radius:50%;
+    border:1px solid rgba(255,153,51,.25);
+    animation:founderPulse 3s ease-in-out infinite;
+  }
+  @keyframes founderPulse {
+    0%,100% { transform:scale(1); opacity:.5; }
+    50% { transform:scale(1.06); opacity:1; }
+  }
+
+  .founder-content { max-width:500px; }
+  .founder-content .section-tag { margin-bottom:12px; }
+  .founder-name {
+    font-family:'Yatra One',cursive;
+    font-size:clamp(1.8rem,4vw,2.6rem);
+    margin-bottom:4px;
+    background:linear-gradient(135deg,var(--saffron),var(--white));
+    -webkit-background-clip:text; -webkit-text-fill-color:transparent;
+    background-clip:text;
+  }
+  .founder-designation { color:var(--green-light); font-weight:500; font-size:.95rem; margin-bottom:24px; }
+  .founder-quote {
+    background:var(--glass-bg);
+    border:1px solid var(--glass-border);
+    backdrop-filter:blur(14px);
+    border-radius:16px; padding:24px;
+    color:var(--text-light); font-size:1rem; line-height:1.85;
+    position:relative;
+  }
+  .founder-quote::before {
+    content:'"'; position:absolute; top:-18px; left:20px;
+    font-size:5rem; color:var(--saffron); opacity:.4;
+    font-family:serif; line-height:1;
+  }
+  .founder-socials { display:flex; gap:12px; margin-top:24px; }
+  .social-btn {
+    width:40px; height:40px; border-radius:50%;
+    background:var(--glass-bg); border:1px solid var(--glass-border);
+    display:flex; align-items:center; justify-content:center;
+    cursor:pointer; font-size:.9rem;
+    transition:transform .25s, border-color .25s, box-shadow .25s;
+  }
+  .social-btn:hover {
+    transform:translateY(-4px);
+    border-color:var(--saffron);
+    box-shadow:0 8px 20px var(--saffron-glow);
+  }
+
+  /* ── DIVIDER CHAKRA ── */
+  .divider-line {
+    position:relative; z-index:2;
+    display:flex; align-items:center; gap:24px;
+    max-width:1100px; margin:0 auto; padding:0 5%;
+  }
+  .divider-line::before, .divider-line::after {
+    content:''; flex:1; height:1px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.12),transparent);
+  }
+  .div-chakra {
+    width:32px; height:32px; flex-shrink:0;
+    border:1.5px solid rgba(0,0,200,.6);
+    border-radius:50%; animation:spin 8s linear infinite;
+    opacity:.7;
+  }
+
+  /* ── FOOTER ── */
+  footer {
+    position:relative; z-index:2;
+    background: rgba(5,10,20,0.9);
+    border-top:1px solid rgba(255,255,255,.06);
+    padding:48px 5% 32px;
+  }
+  .footer-inner { max-width:1100px; margin:0 auto; }
+  .footer-top {
+    display:flex; justify-content:space-between; align-items:flex-start;
+    flex-wrap:wrap; gap:40px; margin-bottom:40px;
+  }
+  .footer-brand { max-width:300px; }
+  .footer-logo {
+    font-family:'Yatra One',cursive; font-size:1.3rem;
+    color:var(--white); margin-bottom:12px;
+    display:flex; align-items:center; gap:10px;
+  }
+  .footer-logo-chakra {
+    width:28px; height:28px; border-radius:50%;
+    border:2px solid var(--chakra-blue);
+    animation:spin 8s linear infinite;
+  }
+  .footer-brand p { color:var(--text-dim); font-size:.85rem; line-height:1.7; }
+  .footer-links h4 { color:var(--white); font-weight:600; margin-bottom:16px; font-size:.9rem; }
+  .footer-links ul { list-style:none; display:flex; flex-direction:column; gap:10px; }
+  .footer-links a { color:var(--text-dim); text-decoration:none; font-size:.85rem; transition:color .25s; }
+  .footer-links a:hover { color:var(--saffron); }
+  .footer-bottom {
+    border-top:1px solid rgba(255,255,255,.06);
+    padding-top:24px;
+    display:flex; justify-content:space-between; align-items:center;
+    flex-wrap:wrap; gap:16px;
+  }
+  .footer-copy { color:var(--text-dim); font-size:.82rem; }
+  .footer-copy span { color:var(--saffron); }
+  .footer-india { display:flex; align-items:center; gap:8px; }
+  .tricolor-inline {
+    width:32px; height:20px; border-radius:3px; overflow:hidden;
+    display:flex; flex-direction:column;
+  }
+  .tc-s { flex:1; background:var(--saffron); }
+  .tc-w { flex:1; background:white; }
+  .tc-g { flex:1; background:var(--green); }
+  .footer-india span { color:var(--text-dim); font-size:.82rem; }
+
+  /* ── ANIMATIONS ── */
+  @keyframes spin { to { transform:rotate(360deg); } }
+  @keyframes fadeSlideUp {
+    from { opacity:0; transform:translateY(28px); }
+    to   { opacity:1; transform:translateY(0); }
+  }
+  .reveal {
+    opacity:0; transform:translateY(30px);
+    transition: opacity .7s ease, transform .7s ease;
+  }
+  .reveal.visible { opacity:1; transform:none; }
+
+  /* ── SCROLL PROGRESS ── */
+  #scroll-bar {
+    position:fixed; top:70px; left:0; height:2px;
+    background:linear-gradient(90deg,var(--saffron),var(--green));
+    z-index:999; transition:width .1s linear;
+    box-shadow:0 0 10px var(--saffron-glow);
+  }
+
+  /* ── MOBILE ── */
+  @media(max-width:900px) {
+    .about-grid { grid-template-columns:1fr; }
+    .vision-grid { grid-template-columns:1fr 1fr; }
+    .nav-links { display:none; }
+    .hamburger { display:flex; }
+    .nav-links.open {
+      display:flex; flex-direction:column;
+      position:fixed; top:70px; left:0; right:0; bottom:0;
+      background:rgba(5,10,20,.95); backdrop-filter:blur(20px);
+      align-items:center; justify-content:center; gap:32px;
+    }
+    .nav-links.open a { font-size:1.5rem; }
+    .founder-wrap { gap:36px; }
+    .founder-ring { width:150px; height:150px; }
+  }
+  @media(max-width:600px) {
+    .vision-grid { grid-template-columns:1fr; }
+    .footer-top { flex-direction:column; }
+    .footer-bottom { flex-direction:column; text-align:center; }
+    .about-visual { display:none; }
+  }
+
+  /* RIPPLE */
+  .ripple {
+    position:absolute; border-radius:50%;
+    background:rgba(255,153,51,.25);
+    animation:rippleOut .6s ease forwards;
+    pointer-events:none;
+  }
+  @keyframes rippleOut {
+    from { width:0; height:0; opacity:1; margin:0; }
+    to { width:120px; height:120px; opacity:0; margin:-60px; }
+  }
+</style>
+</head>
+<body>
+
+<!-- Cursor -->
+<div id="cursor"></div>
+<div id="cursor-ring"></div>
+
+<!-- Animated Background -->
+<div id="bg-canvas"></div>
+<canvas id="particle-canvas"></canvas>
+
+<!-- Scroll Bar -->
+<div id="scroll-bar"></div>
+
+<!-- ── NAVBAR ── -->
+<nav id="navbar">
+  <div class="nav-logo">
+    <div class="chakra-mini"></div>
+    Bharat BioVote
+  </div>
+  <ul class="nav-links" id="navLinks">
+    <li><a href="#hero">Home</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#vision">Vision</a></li>
+    <li><a href="#founder">Founder</a></li>
+  </ul>
+  <button class="nav-cta" onclick="openModal('regModal')">Get Started</button>
+  <div class="hamburger" id="hamburger" onclick="toggleNav()">
+    <span></span><span></span><span></span>
+  </div>
+</nav>
+
+<!-- ── HERO ── -->
+<section id="hero">
+  <div class="tricolor-bar"></div>
+
+  <!-- Big Ashoka Chakra -->
+  <div class="ashoka-wrap">
+    <div class="ashoka-outer">
+      <svg class="ashoka-svg" id="ashokaSpokes" viewBox="0 0 200 200"></svg>
+      <div class="ashoka-inner-ring"></div>
+      <div class="ashoka-hub"></div>
+    </div>
+  </div>
+
+  <div class="hero-badge">
+    <div class="badge-dot"></div>
+    Digital India Initiative
+  </div>
+
+  <h1 class="hero-title">Bharat BioVote<br>Secure Voting System</h1>
+  <p class="hero-tagline">
+    <span>Secure.</span> Transparent. <span>Digital Voting</span> for Bharat.<br>
+    Empowering every citizen's voice with integrity.
+  </p>
+
+  <div class="btn-group">
+    <button class="btn-primary" onclick="openModal('regModal')">📋 Register Now</button>
+    <button class="btn-secondary" onclick="openModal('voteModal')">🔐 Voter Login</button>
+  </div>
+
+  <div class="hero-stats">
+    <div class="stat-item">
+      <div class="stat-num" data-target="96">0</div>
+      <div class="stat-label">Crore Voters</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" data-target="28">0</div>
+      <div class="stat-label">States Covered</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" data-target="100">0</div>
+      <div class="stat-label">% Secure</div>
+    </div>
+    <div class="stat-item">
+      <div class="stat-num" data-target="24">0</div>
+      <div class="stat-label">/ 7 Uptime</div>
+    </div>
+  </div>
+</section>
+
+<!-- ── MODAL: REGISTRATION (Integrated) ── -->
+<div id="regModal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('regModal')">&times;</span>
+    <h2 style="font-family:'Yatra One'; color:white; margin-bottom:20px; font-size: 1.8rem;">Register New Voter</h2>
+    <div class="form-group"><label>Full Name</label><input type="text" id="regName" placeholder="Enter full legal name"></div>
+    <div class="form-group"><label>Voter ID (EPIC Number)</label><input type="text" id="regVoterId" placeholder="e.g. ABC1234567"></div>
+    <div class="form-group"><label>Mobile Number</label><input type="tel" id="regMobile" placeholder="+91 00000 00000"></div>
+    <button class="modal-btn" onclick="registerUser()">1. Save to Database</button>
+    <button class="modal-btn" onclick="registerFingerprint()" style="background:var(--navy); margin-top:12px;">2. Link Biometrics</button>
+    <p id="regStatus" style="font-size:0.85rem; margin-top:15px; text-align:center; color:var(--green-light); font-weight: 500;"></p>
+  </div>
+</div>
+
+<!-- ── MODAL: VOTING (Integrated) ── -->
+<div id="voteModal" class="modal-overlay">
+  <div class="modal-content">
+    <span class="modal-close" onclick="closeModal('voteModal')">&times;</span>
+    <h2 style="font-family:'Yatra One'; color:white; margin-bottom:20px; font-size: 1.8rem;">Voter Authentication</h2>
+    
+    <div id="authStep">
+        <div style="text-align: center; margin-bottom: 25px;">
+            <div style="font-size: 3.5rem; margin-bottom: 10px;">🛡️</div>
+            <p style="color:var(--text-dim); font-size:0.95rem; line-height: 1.5;">Biometric authentication is required to access your digital ballot paper.</p>
+        </div>
+        <button class="modal-btn" onclick="loginFingerprint()" style="background:linear-gradient(135deg, var(--saffron), var(--green))">🔑 Verify Identity (Biometric)</button>
+    </div>
+
+    <div id="ballotStep" style="display:none;">
+        <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 15px; padding-bottom: 15px; border-bottom: 1px solid var(--glass-border);">
+            <div style="width: 10px; height: 10px; border-radius: 50%; background: var(--green-light); box-shadow: 0 0 10px var(--green-glow);"></div>
+            <h3 style="color:var(--white); font-size: 1.1rem;">Verified: <span id="voterDisplayName" style="color: var(--saffron);"></span></h3>
+        </div>
+        <p style="color:var(--text-dim); margin-bottom:20px; font-size: 0.9rem;">Choose your candidate below. Your vote will be encrypted and recorded anonymously.</p>
+        <div class="vote-grid">
+            <button class="party-btn" onclick="castVote('National Progress Party')"><span class="party-icon">🇮🇳</span> <div><b>NPP</b><div style="font-size: 0.7rem; color: var(--text-dim); font-weight: 400;">National Progress Party</div></div></button>
+            <button class="party-btn" onclick="castVote('United Democratic Front')"><span class="party-icon">🏛️</span> <div><b>UDF</b><div style="font-size: 0.7rem; color: var(--text-dim); font-weight: 400;">United Democratic Front</div></div></button>
+            <button class="party-btn" onclick="castVote('Common Citizen Alliance')"><span class="party-icon">⚖️</span> <div><b>CCA</b><div style="font-size: 0.7rem; color: var(--text-dim); font-weight: 400;">Common Citizen Alliance</div></div></button>
+        </div>
+    </div>
+  </div>
+</div>
+
+<!-- divider -->
+<div class="divider-line"><div class="div-chakra"></div></div>
+
+<!-- ── ABOUT ── -->
+<section id="about">
+  <div class="section-inner">
+    <div class="about-grid">
+      <div class="about-text reveal">
+        <div class="section-tag">About the Project</div>
+        <h2 class="section-title">A New Era of<br>Democratic Participation</h2>
+        <div class="underline-accent"></div>
+        <p>
+          Bharat BioVote is a next-generation digital voting platform designed
+          specifically for India's diverse and vast electorate. It blends the
+          strength of biometric identity verification with a seamless digital
+          experience — making every vote count, every time.
+        </p>
+        <p>
+          Built on the principles of transparency and inclusivity, this system
+          eliminates traditional bottlenecks of paper ballots and long queues,
+          enabling citizens to exercise their democratic right from anywhere in
+          the country — securely and without compromise.
+        </p>
+        <div class="about-features">
+          <div class="feature-pill">
+            <div class="pill-icon">🛡️</div>
+            <div class="pill-text">
+              <strong>End-to-End Security</strong>
+              <span>Multi-layer identity protection for every voter</span>
+            </div>
+          </div>
+          <div class="feature-pill">
+            <div class="pill-icon">🌐</div>
+            <div class="pill-text">
+              <strong>Nationwide Accessibility</strong>
+              <span>Works across urban cities and rural districts</span>
+            </div>
+          </div>
+          <div class="feature-pill">
+            <div class="pill-icon">🔍</div>
+            <div class="pill-text">
+              <strong>Transparent Audit Trail</strong>
+              <span>Real-time verifiable electoral records</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="about-visual reveal">
+        <div class="security-card">
+          <div class="lock-ring">
+            <span style="font-size:2.4rem">🔐</span>
+          </div>
+          <h3>Identity Verified</h3>
+          <p>Every vote is authenticated with multi-factor identity confirmation — no duplicate, no proxy.</p>
+          <div style="margin-top:24px;padding-top:20px;border-top:1px solid var(--glass-border);">
+            <div style="display:flex;justify-content:space-between;margin-bottom:10px;">
+              <span style="font-size:.8rem;color:var(--text-dim)">Security Score</span>
+              <span style="font-size:.8rem;color:var(--green-light);font-weight:600">99.9%</span>
+            </div>
+            <div style="background:rgba(255,255,255,.08);border-radius:50px;overflow:hidden;height:6px;">
+              <div style="width:99.9%;height:100%;background:linear-gradient(90deg,var(--saffron),var(--green));border-radius:50px;animation:barFill 2s ease forwards;"></div>
+            </div>
+          </div>
+          <div style="display:flex;gap:12px;margin-top:20px;justify-content:center;">
+            <div style="text-align:center;">
+              <div style="font-size:1.2rem;font-weight:700;color:var(--saffron)">256-bit</div>
+              <div style="font-size:.72rem;color:var(--text-dim)">Encryption</div>
+            </div>
+            <div style="width:1px;background:var(--glass-border)"></div>
+            <div style="text-align:center;">
+              <div style="font-size:1.2rem;font-weight:700;color:var(--green-light)">Zero</div>
+              <div style="font-size:.72rem;color:var(--text-dim)">Breach History</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"><div class="div-chakra"></div></div>
+
+<!-- ── VISION ── -->
+<section id="vision">
+  <div class="section-inner">
+    <div style="text-align:center;" class="reveal">
+      <div class="section-tag">Our Vision</div>
+      <h2 class="section-title">Powering Digital India<br>Through Democratic Trust</h2>
+      <div class="underline-accent" style="margin:0 auto 40px;"></div>
+    </div>
+    <div class="vision-grid">
+      <div class="vision-card">
+        <div class="vc-num">01</div>
+        <span class="vc-icon">🇮🇳</span>
+        <div class="vc-title">Digital India at Heart</div>
+        <p class="vc-desc">Aligned with India's Digital India initiative, BioVote bridges the gap between traditional electoral processes and modern technology — making governance truly citizen-centric.</p>
+      </div>
+      <div class="vision-card">
+        <div class="vc-num">02</div>
+        <span class="vc-icon">⚖️</span>
+        <div class="vc-title">Transparency First</div>
+        <p class="vc-desc">Every vote is recorded with an immutable audit trail. No manipulation, no ambiguity — just a crystal-clear democratic process that citizens can trust completely.</p>
+      </div>
+      <div class="vision-card">
+        <div class="vc-num">03</div>
+        <span class="vc-icon">♿</span>
+        <div class="vc-title">Universal Accessibility</div>
+        <p class="vc-desc">Designed for all — from tech-savvy youth in metro cities to senior citizens in remote villages. Multiple language support and an intuitive interface ensure no voice goes unheard.</p>
+      </div>
+      <div class="vision-card">
+        <div class="vc-num">04</div>
+        <span class="vc-icon">🌱</span>
+        <div class="vc-title">Eco-Friendly Democracy</div>
+        <p class="vc-desc">Eliminating millions of paper ballots, BioVote takes a significant step towards an environmentally responsible electoral system, supporting India's sustainability goals.</p>
+      </div>
+      <div class="vision-card">
+        <div class="vc-num">05</div>
+        <span class="vc-icon">🤝</span>
+        <div class="vc-title">Inclusive Participation</div>
+        <p class="vc-desc">Empowering NRIs, disabled citizens, and those in remote regions to participate fully in the democratic process without logistical barriers.</p>
+      </div>
+      <div class="vision-card">
+        <div class="vc-num">06</div>
+        <span class="vc-icon">🚀</span>
+        <div class="vc-title">Future-Ready Platform</div>
+        <p class="vc-desc">Built to scale for India's growing electorate, continuously evolving with technology to keep pace with the nation's digital transformation journey.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<div class="divider-line"><div class="div-chakra"></div></div>
+
+<!-- ── FOUNDER ── -->
+<section id="founder">
+  <div class="section-inner">
+    <div class="founder-wrap">
+      <div class="founder-avatar-wrap reveal">
+        <div class="founder-ring">
+          <div class="founder-avatar">D</div>
+        </div>
+        <div class="founder-halo"></div>
+      </div>
+      <div class="founder-content reveal">
+        <div class="section-tag">Meet the Founder</div>
+        <h2 class="founder-name">Dhananjay Misal</h2>
+        <p class="founder-designation">🏛️ Founder & Visionary – Bharat BioVote</p>
+        <div class="founder-quote">
+          "India is the world's largest democracy — and its citizens deserve a voting system as powerful, secure, and inclusive as the nation itself. Bharat BioVote is not just a technology — it is our commitment to every Indian: your vote is your voice, and we will protect it with everything we have. Together, we are building a future where democracy is truly accessible, transparent, and incorruptible."
+        </div>
+        <div class="founder-socials">
+          <div class="social-btn" title="LinkedIn">💼</div>
+          <div class="social-btn" title="Twitter">🐦</div>
+          <div class="social-btn" title="Email">📧</div>
+          <div class="social-btn" title="GitHub">💻</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ── FOOTER ── -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-top">
+      <div class="footer-brand">
+        <div class="footer-logo">
+          <div class="footer-logo-chakra"></div>
+          Bharat BioVote
+        </div>
+        <p>Securing India's democratic future through technology, transparency, and trust. Every vote matters. Every voice counts.</p>
+      </div>
+      <div class="footer-links">
+        <h4>Platform</h4>
+        <ul>
+          <li><a href="#" onclick="openModal('regModal')">Voter Registration</a></li>
+          <li><a href="#" onclick="openModal('voteModal')">Voter Login</a></li>
+          <li><a href="#">Election Schedule</a></li>
+          <li><a href="#">Results Dashboard</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Resources</h4>
+        <ul>
+          <li><a href="#">How It Works</a></li>
+          <li><a href="#">Security Standards</a></li>
+          <li><a href="#">FAQs</a></li>
+          <li><a href="#">Contact Support</a></li>
+        </ul>
+      </div>
+      <div class="footer-links">
+        <h4>Legal</h4>
+        <ul>
+          <li><a href="#">Privacy Policy</a></li>
+          <li><a href="#">Terms of Use</a></li>
+          <li><a href="#">Data Security</a></li>
+          <li><a href="#">Grievance Portal</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer-bottom">
+      <p class="footer-copy">© 2026 <span>Bharat BioVote</span> | Designed & Developed by Dhananjay Misal</p>
+      <div class="footer-india">
+        <div class="tricolor-inline">
+          <div class="tc-s"></div><div class="tc-w"></div><div class="tc-g"></div>
+        </div>
+        <span>Made in India 🇮🇳 with ❤️</span>
+      </div>
+    </div>
+  </div>
+</footer>
+
+<style>
+  @keyframes barFill {
+    from { width:0; }
+    to { width:99.9%; }
+  }
+</style>
+
+<!-- ── FIREBASE & SYSTEM LOGIC (Integrated from File 2) ── -->
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  const firebaseConfig = {
+    apiKey: "AIzaSyBWhOOP0pFSr9GNdSHFlJJfUbRlKpTCzfc",
+    authDomain: "bharat-biovote.firebaseapp.com",
+    projectId: "bharat-biovote",
+    storageBucket: "bharat-biovote.firebasestorage.app",
+    messagingSenderId: "490208979194",
+    appId: "1:490208979194:web:2a7ba7601ece4bd53a8143"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let sessionVoterID = null;
+
+  // 1. REGISTER USER
+  window.registerUser = async function() {
+    const name = document.getElementById("regName").value;
+    const voterid = document.getElementById("regVoterId").value.trim().toUpperCase();
+    const mobile = document.getElementById("regMobile").value;
+    
+    if(!name || !voterid) return alert("Please enter both Name and Voter ID");
+
+    try {
+        await setDoc(doc(db, "users", voterid), { 
+          name, 
+          mobile, 
+          voted: false, 
+          vote: "none",
+          registeredAt: new Date().toISOString()
+        });
+        alert("Personal details saved. Now please link your biometrics (Step 2).");
+    } catch (e) { alert("Error: " + e.message); }
+  };
+
+  // 2. FINGERPRINT REGISTRATION (WebAuthn API)
+  window.registerFingerprint = async function() {
+    try {
+        const publicKey = {
+            challenge: new Uint8Array(32),
+            rp: { name: "Bharat BioVote" },
+            user: { id: new Uint8Array(16), name: "voter@bharat.gov", displayName: "Voter" },
+            pubKeyCredParams: [{ alg: -7, type: "public-key" }]
+        };
+        await navigator.credentials.create({ publicKey });
+        document.getElementById("regStatus").innerText = "✅ Biometric Registration Complete";
+        setTimeout(() => closeModal('regModal'), 2000);
+    } catch (err) { alert("Biometric Registration Failed. Ensure you are using a secure connection (HTTPS)."); }
+  }
+
+  // 3. FINGERPRINT LOGIN + FIREBASE CHECK
+  window.loginFingerprint = async function() {
+    try {
+        // Biometric Challenge
+        await navigator.credentials.get({ publicKey: { challenge: new Uint8Array(32) } });
+
+        const voterid = prompt("Identity Verified. Enter Voter ID to access digital ballot:").toUpperCase();
+        if(!voterid) return;
+
+        // Check Election Status
+        const electionSnap = await getDoc(doc(db, "settings", "election"));
+        if(electionSnap.exists() && electionSnap.data().status === "stopped") {
+            return alert("ELECTION CLOSED: The administrator has concluded the voting window.");
+        }
+
+        // Fetch User Data
+        const userSnap = await getDoc(doc(db, "users", voterid));
+        if (!userSnap.exists()) return alert("Voter record not found. Please register first.");
+
+        if (userSnap.data().voted === true) {
+            alert("VOTE ALREADY CAST: Our records show you have already exercised your vote.");
+        } else {
+            sessionVoterID = voterid;
+            document.getElementById("voterDisplayName").innerText = userSnap.data().name;
+            document.getElementById("authStep").style.display = "none";
+            document.getElementById("ballotStep").style.display = "block";
+        }
+    } catch (err) { alert("Biometric Authentication Failed."); }
+  };
+
+  // 4. CAST VOTE
+  window.castVote = async function(candidate) {
+    if (!sessionVoterID) return alert("Session invalid. Please login again.");
+    
+    if(!confirm(`Are you sure you want to vote for ${candidate}? This action cannot be undone.`)) return;
+
+    try {
+        await updateDoc(doc(db, "users", sessionVoterID), {
+            voted: true,
+            vote: candidate,
+            voteTimestamp: new Date().toISOString()
+        });
+        alert("SUCCESS: Your vote for " + candidate + " has been securely recorded.");
+        location.reload();
+    } catch (e) { alert("System Error: " + e.message); }
+  };
+</script>
+
+<script>
+/* ══════════════════════════════════════════
+   CURSOR
+══════════════════════════════════════════ */
+const cursor = document.getElementById('cursor');
+const ring = document.getElementById('cursor-ring');
+let mx=0,my=0,rx=0,ry=0;
+document.addEventListener('mousemove', e=>{
+  mx=e.clientX; my=e.clientY;
+  cursor.style.left=mx+'px'; cursor.style.top=my+'px';
+});
+(function animRing(){
+  rx+=(mx-rx)*.12; ry+=(my-ry)*.12;
+  ring.style.left=rx+'px'; ring.style.top=ry+'px';
+  requestAnimationFrame(animRing);
+})();
+document.querySelectorAll('button,a,.feature-pill,.vision-card,.social-btn').forEach(el=>{
+  el.addEventListener('mouseenter',()=>{ cursor.style.transform='translate(-50%,-50%) scale(2)'; ring.style.transform='translate(-50%,-50%) scale(1.4)'; });
+  el.addEventListener('mouseleave',()=>{ cursor.style.transform='translate(-50%,-50%) scale(1)'; ring.style.transform='translate(-50%,-50%) scale(1)'; });
+});
+
+/* ══════════════════════════════════════════
+   PARTICLES
+══════════════════════════════════════════ */
+const pc = document.getElementById('particle-canvas');
+const ctx = pc.getContext('2d');
+let W,H,particles=[];
+function resize(){ W=pc.width=window.innerWidth; H=pc.height=window.innerHeight; }
+resize(); window.addEventListener('resize',resize);
+
+const COLS = ['rgba(255,153,51,', 'rgba(255,255,255,', 'rgba(19,136,8,', 'rgba(0,0,200,'];
+function rand(a,b){ return a+Math.random()*(b-a); }
+
+class Particle {
+  constructor(){
+    this.x=rand(0,W); this.y=rand(0,H);
+    this.r=rand(.8,2.5);
+    this.vx=rand(-0.3,0.3); this.vy=rand(-0.5,-0.1);
+    this.col=COLS[Math.floor(Math.random()*COLS.length)];
+    this.life=rand(0.3,0.8); this.decay=rand(0.001,0.003);
+  }
+  update(){
+    this.x+=this.vx; this.y+=this.vy;
+    this.life-=this.decay;
+    if(this.life<=0||this.y<-5) Object.assign(this,new Particle(),{y:H+5});
+  }
+  draw(){
+    ctx.beginPath();
+    ctx.arc(this.x,this.y,this.r,0,Math.PI*2);
+    ctx.fillStyle=this.col+this.life+')';
+    ctx.fill();
+  }
+}
+for(let i=0;i<180;i++) particles.push(new Particle());
+
+// shooting stars
+const stars=[];
+class Star {
+  reset(){
+    this.x=rand(0,W); this.y=rand(0,H*.4);
+    this.len=rand(60,160); this.speed=rand(4,9);
+    this.angle=Math.PI/4; this.life=1; this.decay=rand(0.012,0.025);
+    this.col=COLS[Math.floor(Math.random()*COLS.length)];
+  }
+  constructor(){ this.reset(); }
+  update(){ this.x+=Math.cos(this.angle)*this.speed; this.y+=Math.sin(this.angle)*this.speed; this.life-=this.decay; if(this.life<=0) this.reset(); }
+  draw(){
+    ctx.save();
+    const grd=ctx.createLinearGradient(this.x,this.y,this.x-Math.cos(this.angle)*this.len,this.y-Math.sin(this.angle)*this.len);
+    grd.addColorStop(0,this.col+this.life+')');
+    grd.addColorStop(1,this.col+'0)');
+    ctx.strokeStyle=grd; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.moveTo(this.x,this.y);
+    ctx.lineTo(this.x-Math.cos(this.angle)*this.len,this.y-Math.sin(this.angle)*this.len);
+    ctx.stroke(); ctx.restore();
+  }
+}
+for(let i=0;i<5;i++) stars.push(new Star());
+
+function animParticles(){
+  ctx.clearRect(0,0,W,H);
+  particles.forEach(p=>{ p.update(); p.draw(); });
+  stars.forEach(s=>{ s.update(); s.draw(); });
+  requestAnimationFrame(animParticles);
+}
+animParticles();
+
+/* ══════════════════════════════════════════
+   ASHOKA CHAKRA SPOKES (24 spokes)
+══════════════════════════════════════════ */
+(function(){
+  const svg = document.getElementById('ashokaSpokes');
+  const cx=100,cy=100,r=90,hub=10;
+  const N=24;
+  for(let i=0;i<N;i++){
+    const ang=(i/N)*Math.PI*2 - Math.PI/2;
+    const x1=cx+hub*Math.cos(ang), y1=cy+hub*Math.sin(ang);
+    const x2=cx+r*Math.cos(ang),   y2=cy+r*Math.sin(ang);
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1); line.setAttribute('y1',y1);
+    line.setAttribute('x2',x2); line.setAttribute('y2',y2);
+    line.setAttribute('stroke','rgba(0,0,200,0.65)');
+    line.setAttribute('stroke-width','1.5');
+    svg.appendChild(line);
+    // arrowhead at tip
+    const head=document.createElementNS('http://www.w3.org/2000/svg','polygon');
+    const ax=cx+(r+0)*Math.cos(ang), ay=cy+(r+0)*Math.sin(ang);
+    const lax=cx+(r-8)*Math.cos(ang-0.07), lay=cy+(r-8)*Math.sin(ang-0.07);
+    const rax=cx+(r-8)*Math.cos(ang+0.07), ray=cy+(r-8)*Math.sin(ang+0.07);
+    head.setAttribute('points',`${ax},${ay} ${lax},${lay} ${rax},${ray}`);
+    head.setAttribute('fill','rgba(0,0,200,0.8)');
+    svg.appendChild(head);
+  }
+  // outer circle
+  const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+  c.setAttribute('cx',cx); c.setAttribute('cy',cy); c.setAttribute('r',r);
+  c.setAttribute('fill','none'); c.setAttribute('stroke','rgba(0,0,200,0.5)');
+  c.setAttribute('stroke-width','2');
+  svg.appendChild(c);
+})();
+
+/* ══════════════════════════════════════════
+   SCROLL PROGRESS BAR
+══════════════════════════════════════════ */
+window.addEventListener('scroll',()=>{
+  const pct=(window.scrollY/(document.body.scrollHeight-window.innerHeight))*100;
+  document.getElementById('scroll-bar').style.width=pct+'%';
+});
+
+/* ══════════════════════════════════════════
+   MODAL UTILITIES
+══════════════════════════════════════════ */
+window.openModal = function(id) { 
+  document.getElementById(id).style.display = 'flex';
+  document.body.style.overflow = 'hidden'; // Stop scroll
+}
+window.closeModal = function(id) { 
+  document.getElementById(id).style.display = 'none'; 
+  document.body.style.overflow = 'auto'; // Resume scroll
+}
+
+/* ══════════════════════════════════════════
+   INTERSECTION OBSERVER – REVEAL
+══════════════════════════════════════════ */
+const revealObs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{ if(e.isIntersecting) e.target.classList.add('visible'); });
+}, {threshold:.15});
+document.querySelectorAll('.reveal,.vision-card').forEach(el=>revealObs.observe(el));
+
+/* ══════════════════════════════════════════
+   COUNTER ANIMATION
+══════════════════════════════════════════ */
+const counterObs = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting) return;
+    e.target.querySelectorAll('[data-target]').forEach(el=>{
+      const target=+el.dataset.target, dur=1800;
+      let start=null;
+      function step(ts){
+        if(!start) start=ts;
+        const prog=Math.min((ts-start)/dur,1);
+        const ease=1-Math.pow(1-prog,3);
+        el.textContent=Math.floor(ease*target)+(target===100?'%':'+');
+        if(prog<1) requestAnimationFrame(step);
+        else el.textContent=target+(target===100?'%':'+');
+      }
+      requestAnimationFrame(step);
+    });
+    counterObs.unobserve(e.target);
+  });
+},{threshold:.5});
+counterObs.observe(document.querySelector('.hero-stats'));
+
+/* ══════════════════════════════════════════
+   NAVBAR SCROLL
+══════════════════════════════════════════ */
+window.addEventListener('scroll',()=>{
+  document.getElementById('navbar').style.background=
+    window.scrollY>50?'rgba(5,10,20,0.95)':'rgba(5,10,20,0.72)';
+});
+
+/* HAMBURGER */
+function toggleNav(){
+  document.getElementById('navLinks').classList.toggle('open');
+}
+document.querySelectorAll('#navLinks a').forEach(a=>a.addEventListener('click',()=>{
+  document.getElementById('navLinks').classList.remove('open');
+}));
+
+/* ══════════════════════════════════════════
+   MOUSE PARALLAX ON HERO
+══════════════════════════════════════════ */
+document.getElementById('hero').addEventListener('mousemove',e=>{
+  const {clientX:x,clientY:y}=e;
+  const cx=window.innerWidth/2, cy=window.innerHeight/2;
+  const dx=(x-cx)/cx*10, dy=(y-cy)/cy*10;
+  const aw=document.querySelector('.ashoka-wrap');
+  if(aw) aw.style.transform=`translate(${dx*.5}px,${dy*.5}px)`;
+});
+
+/* ══════════════════════════════════════════
+   VISION CARDS STAGGER
+══════════════════════════════════════════ */
+document.querySelectorAll('.vision-card').forEach((c,i)=>{
+  c.style.transitionDelay=`${i*0.1}s`;
+});
+</script>
+</body>
+</html>
